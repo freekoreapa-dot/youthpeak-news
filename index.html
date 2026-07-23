@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouthPeak 청소년뉴스</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; color: #333; }
+        
+        /* 상단 헤더: 글자가 아래로 떨어지지 않도록 크기와 간격 최적화 */
+        header { background-color: #1b263b; color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap; }
+        .header-left { display: flex; align-items: center; gap: 8px; cursor: pointer; overflow: hidden; }
+        .header-logo { width: 34px; height: 34px; min-width: 34px; border-radius: 50%; object-fit: cover; border: 1px solid #fff; background-color: #0077b6; }
+        header h1 { margin: 0; font-size: 16px; font-weight: bold; letter-spacing: -0.5px; }
+        
+        .auth-buttons { display: flex; gap: 6px; }
+        .auth-buttons button { background: #415a77; color: white; border: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+        nav { background-color: #415a77; padding: 10px; text-align: center; color: white; font-size: 14px; }
+        
+        .container { max-width: 800px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* 메인 뉴스 목록 스타일 */
+        #mainNewsList { display: block; }
+        .news-list-item { padding: 15px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .news-list-item:hover { background-color: #fafafa; }
+        .news-category { font-size: 12px; color: #0077b6; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .news-list-title { font-size: 18px; font-weight: bold; color: #111; margin: 0 0 5px 0; }
+        .news-list-date { font-size: 12px; color: #888; }
+
+        /* 개별 기사 읽기 화면 스타일 (제목 강조 폰트 적용) */
+        #articleDetailView { display: none; }
+        .back-btn { background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; font-size: 12px; }
+        
+        .article-title-highlight { font-size: 24px; font-weight: 800; color: #0d1b2a; margin-top: 5px; margin-bottom: 10px; line-height: 1.3; font-family: 'Noto Sans KR', sans-serif; }
+        .meta { font-size: 12px; color: #888; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        .article-image-box { text-align: center; margin-bottom: 20px; }
+        .article-image-box img { max-width: 100%; height: auto; border-radius: 6px; max-height: 400px; }
+
+        .content { line-height: 1.7; font-size: 16px; margin-bottom: 30px; color: #2b2b2b; }
+        
+        /* 하트, 공유 버튼 (댓글창 바로 위) */
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        button { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .heart-btn { background-color: #fff; border: 1px solid #ccc; color: #333; }
+        .share-btn { background-color: #fff; border: 1px solid #ccc; color: #333; }
+        
+        #writerSection { display: none; background: #eef2f7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 2px dashed #415a77; }
+        #writerSection input, #writerSection textarea { width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        #writerSection textarea { height: 120px; }
+        .file-label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; text-align: left; }
+
+        .comment-section { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; }
+        .comment-input-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        .comment-input-box input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .comment-submit { background-color: #1b263b; color: white; }
+        .comment-list { list-style: none; padding: 0; margin: 0; }
+        
+        .comment-item { background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; display: flex; align-items: flex-start; gap: 10px; }
+        .comment-profile-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; }
+        .comment-body { flex: 1; }
+        .comment-user-id { font-weight: bold; font-size: 13px; color: #1b263b; margin-bottom: 3px; }
+
+        /* 자율구독료 안내 박스 (메인 창 하단) */
+        .subscription-box { margin-top: 40px; background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; text-align: center; }
+        .subscription-box h3 { margin-top: 0; font-size: 16px; color: #1b263b; }
+        .subscription-box p { font-size: 14px; color: #555; margin: 5px 0; }
+        .account-number { font-weight: bold; color: #0077b6; font-size: 15px; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 320px; text-align: center; }
+        .modal-content input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .modal-content button { width: 100%; background: #1b263b; color: white; padding: 8px; }
+        .error-border { border: 2px solid red !important; }
+        .file-upload-box { font-size: 12px; text-align: left; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left" onclick="goHome()">
+            <img src="19700.png" class="header-logo" id="logoImg" alt="YouthPeak 로고" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%230088cc\'/><text x=\'50\' y=\'60\' font-size=\'40\' text-anchor=\'middle\' fill=\'white\'>▲</text></svg>';">
+            <h1>YouthPeak 청소년뉴스</h1>
+        </div>
+        <div class="auth-buttons">
+            <button onclick="openModal('signupModal')">회원가입</button>
+            <button onclick="openModal('adminModal')">관리자</button>
+        </div>
+    </header>
+
+    <nav>정치 · 사회 · 문화 · 청소년 · 오피니언</nav>
+
+    <div class="container">
+        <!-- 관리자 승인 시만 나타나는 기사 작성 툴 -->
+        <div id="writerSection">
+            <h3>✍️ 언론사 기사 작성 틀</h3>
+            <input type="text" id="newCategory" placeholder="카테고리 (예: 속보 / 청소년사회)">
+            <input type="text" id="newTitle" placeholder="기사 제목을 입력하세요">
+            <span class="file-label">기사 관련 사진 첨부</span>
+            <input type="file" id="newImage" accept="image/*">
+            <textarea id="newContent" placeholder="기사 본문을 입력하세요..."></textarea>
+            <button onclick="publishArticle()" style="background:#2ed573; color:white;">기사 세상에 발행하기</button>
+        </div>
+
+        <!-- 1. 메인 뉴스 목록 화면 -->
+        <div id="mainNewsList">
+            <h2>속보 및 주요 기사</h2>
+            <div id="newsItemsContainer"></div>
+
+            <!-- 자율구독료 안내 (메인 창 하단) -->
+            <div class="subscription-box">
+                <h3>📢 YouthPeak 독립언론 자율구독료 안내</h3>
+                <p>청소년들의 진실된 목소리를 지켜주기 위해 자율구독료 후원을 받고 있습니다.</p>
+                <p class="account-number">후원 계좌: 토스뱅크 1908-8004-8201 (예금주: 백*빈)</p>
+                <p style="font-size: 12px; color: #888; margin-top: 8px;">보내주신 소중한 후원금은 전액 취재 활동과 서버 유지비로 사용됩니다.</p>
+            </div>
+        </div>
+
+        <!-- 2. 개별 기사 상세 읽기 화면 -->
+        <div id="articleDetailView">
+            <button class="back-btn" onclick="goHome()">← 목록으로 돌아가기</button>
+            <div class="news-category" id="displayCategory">속보 / 청소년사회</div>
+            <h2 class="article-title-highlight" id="displayTitle">제목</h2>
+            <div class="meta" id="displayMeta">발행일: 2026-07-23 | 기자: YouthPeak 편집국</div>
+            
+            <div class="article-image-box" id="displayImageBox" style="display:none;">
+                <img id="displayImage" src="" alt="기사 사진">
+            </div>
+
+            <div class="content" id="displayContent">본문 내용</div>
+
+            <!-- 하트 & 네이티브 공유 버튼 (댓글창 바로 위) -->
+            <div class="action-bar">
+                <button class="heart-btn" onclick="pressHeart()">🤍 하트 <span id="heart-count">0</span></button>
+                <button class="share-btn" onclick="shareArticle()">🔗 공유하기</button>
+            </div>
+
+            <div class="comment-section">
+                <h3>독자견해 (댓글)</h3>
+                <div class="comment-input-box">
+                    <input type="text" id="commentText" placeholder="로그인 후 댓글 작성 가능">
+                    <button class="comment-submit" onclick="addComment()">등록</button>
+                </div>
+                <ul id="commentList" class="comment-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <h3>회원가입</h3>
+            <input type="text" id="signupId" placeholder="아이디 (영문/숫자 5~15자)">
+            <input type="email" id="signupEmail" placeholder="이메일 입력">
+            <input type="password" id="signupPw" placeholder="비밀번호 입력">
+            <input type="number" id="signupAge" placeholder="나이 입력 (10세 미만 가입불가)">
+            <div class="file-upload-box">
+                <span class="file-label">프로필 사진 선택 (갤러리)</span>
+                <input type="file" id="signupProfileImg" accept="image/*">
+            </div>
+            <button onclick="handleSignup()">가입하기</button>
+            <br><br><button style="background:#888;" onclick="closeModal('signupModal')">닫기</button>
+        </div>
+    </div>
+
+    <!-- 관리자 로그인 모달 -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h3>관리자 로그인</h3>
+            <input type="text" id="adminId" placeholder="관리자 ID (admin)">
+            <input type="password" id="adminPw" placeholder="비밀번호 (1234)">
+            <button onclick="requestAdminLogin()">로그인 및 권한 승인</button>
+            <br><br><button style="background:#888;" onclick="closeModal('adminModal')">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = "";
+        let currentUserImg = "";
+        let currentArticleIndex = 0;
+
+        let articles = JSON.parse(localStorage.getItem('newsArticles') || JSON.stringify([
+            {
+                category: "속보 / 청소년사회",
+                title: "[창립특집] YouthPeak 청소년뉴스 공식 출범",
+                date: "2026-07-23",
+                content: "청소년들의 시선으로 세상을 바라보고 진실된 목소리를 전달하기 위한 독립 언론 'YouthPeak 청소년뉴스'가 출범했습니다. 회원가입을 하지 않아도 누구나 기사를 볼 수 있습니다.",
+                image: "",
+                heart: 0,
+                likedUsers: [],
+                comments: []
+            }
+        ]));
+
+        function saveArticles() {
+            localStorage.setItem('newsArticles', JSON.stringify(articles));
+        }
+
+        window.onload = function() {
+            if(localStorage.getItem('regUserId')) {
+                currentUserId = localStorage.getItem('regUserId');
+                currentUserImg = localStorage.getItem('regUserImg') || "";
+            }
+            renderNewsList();
+        }
+
+        function renderNewsList() {
+            let container = document.getElementById('newsItemsContainer');
+            container.innerHTML = '';
+            
+            articles.forEach((art, index) => {
+                let div = document.createElement('div');
+                div.className = 'news-list-item';
+                div.onclick = function() { openArticle(index); };
+                div.innerHTML = `
+                    <div class="news-category">${art.category}</div>
+                    <div class="news-list-title">${art.title}</div>
+                    <div class="news-list-date">${art.date}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function goHome() {
+            document.getElementById('articleDetailView').style.display = 'none';
+            document.getElementById('mainNewsList').style.display = 'block';
+        }
+
+        function openArticle(index) {
+            currentArticleIndex = index;
+            let art = articles[index];
+
+            document.getElementById('displayCategory').innerText = art.category;
+            document.getElementById('displayTitle').innerText = art.title;
+            document.getElementById('displayMeta').innerText = `발행일: ${art.date} | 기자: YouthPeak 편집국`;
+            document.getElementById('displayContent').innerText = art.content;
+            document.getElementById('heart-count').innerText = art.heart || 0;
+
+            if(art.image) {
+                document.getElementById('displayImage').src = art.image;
+                document.getElementById('displayImageBox').style.display = 'block';
+            } else {
+                document.getElementById('displayImageBox').style.display = 'none';
+            }
+
+            document.getElementById('mainNewsList').style.display = 'none';
+            document.getElementById('articleDetailView').style.display = 'block';
+            loadComments();
+        }
+
+        function pressHeart() {
+            let art = articles[currentArticleIndex];
+            if(!art.likedUsers) art.likedUsers = [];
+
+            let identifier = currentUserId || "guest_" + location.hostname;
+            
+            if(art.likedUsers.includes(identifier)) {
+                alert('이미 이 기사에 하트를 누르셨습니다!');
+                return;
+            }
+
+            art.likedUsers.push(identifier);
+            art.heart = (art.heart || 0) + 1;
+            saveArticles();
+            document.getElementById('heart-count').innerText = art.heart;
+            alert('하트가 반영되었습니다 ❤️');
+        }
+
+        function shareArticle() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.getElementById('displayTitle').innerText,
+                    text: 'YouthPeak 청소년뉴스 기사 읽어보세요!',
+                    url: window.location.href,
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('기사 링크가 복사되었습니다!');
+            }
+        }
+
+        function handleSignup() {
+            let idField = document.getElementById('signupId');
+            let emailField = document.getElementById('signupEmail');
+            let ageField = document.getElementById('signupAge');
+            let imgInput = document.getElementById('signupProfileImg');
+            
+            let id = idField.value;
+            let email = emailField.value;
+            let age = parseInt(ageField.value);
+            let idRegex = /^[A-Za-z0-9]{5,15}$/;
+
+            idField.classList.remove('error-border');
+
+            if (!idRegex.test(id)) {
+                idField.classList.add('error-border');
+                alert('아이디는 5~15자의 영문 및 숫자여야 합니다!');
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                alert('올바른 이메일을 입력하세요!');
+                return;
+            }
+            if (isNaN(age) || age < 10) {
+                alert('10세 미만은 회원가입이 제한됩니다.');
+                return;
+            }
+
+            currentUserId = id;
+
+            if (imgInput.files && imgInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    currentUserImg = e.target.result;
+                    localStorage.setItem('regUserId', currentUserId);
+                    localStorage.setItem('regUserImg', currentUserImg);
+                    alert('회원가입 완료! 이제 댓글을 달 수 있습니다.');
+                    closeModal('signupModal');
+                };
+                reader.readAsDataURL(imgInput.files[0]);
+            } else {
+                currentUserImg = "";
+                localStorage.setItem('regUserId', currentUserId);
+                localStorage.setItem('regUserImg', currentUserImg);
+                alert('회원가입 완료! 이제 댓글을 달 수 있습니다.');
+                closeModal('signupModal');
+            }
+        }
+
+        function requestAdminLogin() {
+            let id = document.getElementById('adminId').value;
+            let pw = document.getElementById('adminPw').value;
+
+            if(id === 'admin' && pw === '1234') {
+                let approval = confirm('[관리자 권한 승인 요청]\n이 사용자를 관리자로 승인하시겠습니까?');
+                if(approval) {
+                    alert('관리자 승인 완료! 기사 작성 툴이 활성화됩니다.');
+                    document.getElementById('writerSection').style.display = 'block';
+                    closeModal('adminModal');
+                } else {
+                    alert('승인이 거부되었습니다.');
+                }
+            } else {
+                alert('관리자 정보가 일치하지 않습니다. (id: admin, pw: 1234)');
+            }
+        }
+
+        function publishArticle() {
+            let category = document.getElementById('newCategory').value;
+            let title = document.getElementById('newTitle').value;
+            let content = document.getElementById('newContent').value;
+            let imgInput = document.getElementById('newImage');
+
+            if(!title || !content) {
+                alert('기사 제목과 본문을 모두 입력해주세요!');
+                return;
+            }
+
+            if (imgInput.files && imgInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    addNewArticle(category || '속보', title, content, e.target.result);
+                };
+                reader.readAsDataURL(imgInput.files[0]);
+            } else {
+                addNewArticle(category || '속보', title, content, "");
+            }
+        }
+
+        function addNewArticle(cat, title, cont, imgSrc) {
+            let today = new Date().toISOString().slice(0, 10);
+            let newArt = {
+                category: cat,
+                title: title,
+                date: today,
+                content: cont,
+                image: imgSrc,
+                heart: 0,
+                likedUsers: [],
+                comments: []
+            };
+
+            articles.unshift(newArt);
+            saveArticles();
+            renderNewsList();
+
+            document.getElementById('newCategory').value = '';
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newContent').value = '';
+            document.getElementById('newImage').value = '';
+
+            alert('기사가 성공적으로 발행되었습니다!');
+            openArticle(0);
+        }
+
+        function addComment() {
+            if(!currentUserId) {
+                alert('회원가입(로그인)을 먼저 해야 댓글을 달 수 있습니다!');
+                openModal('signupModal');
+                return;
+            }
+
+            let input = document.getElementById('commentText');
+            if(!input.value.trim()) return;
+
+            let art = articles[currentArticleIndex];
+            if(!art.comments) art.comments = [];
+
+            art.comments.push({
+                userId: currentUserId,
+                userImg: currentUserImg,
+                text: input.value
+            });
+
+            saveArticles();
+            input.value = '';
+            loadComments();
+        }
+
+        function loadComments() {
+            let art = articles[currentArticleIndex];
+            let list = document.getElementById('commentList');
+            list.innerHTML = '';
+            
+            let comments = art.comments || [];
+            for(let c of comments) {
+                let li = document.createElement('li');
+                li.className = 'comment-item';
+
+                let imgHtml = c.userImg ? `<img src="${c.userImg}" class="comment-profile-img">` : `<div style="width:35px;height:35px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;">👤</div>`;
+
+                li.innerHTML = `
+                    ${imgHtml}
+                    <div class="comment-body">
+                        <div class="comment-user-id">${c.userId}</div>
+                        <div>${c.text}</div>
+                    </div>
+                `;
+                list.appendChild(li);
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
